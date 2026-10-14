@@ -1,0 +1,110 @@
+# Fungsi bantu untuk mengubah angka jadi format Rupiah (bukan bagian OOP)
+def rupiah(nilai):
+    return "Rp{:,.0f}".format(nilai).replace(",", ".")  # contoh: 5000000 jadi Rp5.000.000
+
+
+# ======================================================
+# 1. SUPERCLASS: Karyawan (class induk)
+# ======================================================
+class Karyawan:
+    def __init__(self, nama, id_karyawan, gaji_pokok):  # constructor, jalan otomatis saat objek dibuat
+        self.nama = nama                    # public: nama bisa diakses langsung dari luar class
+        self.id_karyawan = id_karyawan      # public: ID bisa diakses langsung dari luar class
+        self.__gaji_pokok = 0               # private (ada __): nilai awal 0, tidak bisa diubah langsung dari luar
+        self.gaji_pokok = gaji_pokok        # diisi lewat setter supaya nilainya dicek dulu (divalidasi)Encapsulation
+
+    @property
+    def gaji_pokok(self):                   # getter: cara resmi untuk membaca gaji pokok
+        return self.__gaji_pokok            # mengembalikan nilai gaji pokok yang private
+
+    @gaji_pokok.setter
+    def gaji_pokok(self, nilai):            # setter: cara resmi untuk mengubah gaji pokok
+        if nilai <= 0:                      # cek apakah nilai tidak valid (nol atau minus)
+            print(f"[PERINGATAN] Gaji pokok tidak valid ({nilai}). "
+                  f"Nilai harus lebih dari 0!")  # tampilkan peringatan, gaji tidak diubah
+        else:
+            self.__gaji_pokok = nilai       # kalau valid, nilai baru disimpan
+
+    def hitung_gaji_total(self):            # versi dasar penghitungan gaji
+        return self.__gaji_pokok            # gaji total hanya berisi gaji pokok
+
+    def tampilkan_info(self):               # menampilkan data dasar karyawan
+        print(f"Nama         : {self.nama}")                # cetak nama karyawan
+        print(f"ID Karyawan  : {self.id_karyawan}")         # cetak ID karyawan
+        print(f"Gaji Pokok   : {rupiah(self.gaji_pokok)}")  # cetak gaji pokok (lewat getter)
+
+
+# ======================================================
+# 2. CHILD CLASS: KaryawanTetap
+# ======================================================
+class KaryawanTetap(Karyawan):              # inheritance: mewarisi semua atribut dan method dari Karyawan
+    def __init__(self, nama, id_karyawan, gaji_pokok, tunjangan):
+        super().__init__(nama, id_karyawan, gaji_pokok)  # panggil constructor induk untuk isi nama, ID, gaji
+        self.tunjangan = tunjangan          # public: atribut tambahan khusus karyawan tetap
+
+    def hitung_gaji_total(self):            # overriding: menimpa method milik induk
+        return self.gaji_pokok + self.tunjangan  # rumus gaji karyawan tetap: gaji pokok + tunjangan
+
+    def tampilkan_info(self):               # overriding: tampilan versi karyawan tetap
+        print("=== Karyawan Tetap ===")     # judul jenis karyawan
+        print(f"Nama         : {self.nama}")                      # cetak nama
+        print(f"ID Karyawan  : {self.id_karyawan}")               # cetak ID
+        print(f"Gaji Pokok   : {rupiah(self.gaji_pokok)}")        # cetak gaji pokok
+        print(f"Tunjangan    : {rupiah(self.tunjangan)}")         # cetak tunjangan
+        print(f"Total Gaji   : {rupiah(self.hitung_gaji_total())}")  # cetak total gaji (pokok + tunjangan)
+
+
+# ======================================================
+# 3. CHILD CLASS: KaryawanKontrak
+# ======================================================
+class KaryawanKontrak(Karyawan):            # inheritance: mewarisi semua atribut dan method dari Karyawan
+    def __init__(self, nama, id_karyawan, gaji_pokok, jam_lembur, tarif_lembur):
+        super().__init__(nama, id_karyawan, gaji_pokok)  # panggil constructor induk untuk isi nama, ID, gaji
+        self.jam_lembur = jam_lembur        # public: total jam lembur dalam sebulan
+        self.tarif_lembur = tarif_lembur    # public: tarif lembur per jam
+
+    def hitung_gaji_total(self):            # overriding: rumus gaji khusus karyawan kontrak
+        return self.gaji_pokok + (self.jam_lembur * self.tarif_lembur)  # gaji pokok + (jam lembur x tarif)
+
+    def tampilkan_info(self):               # overriding: tampilan versi karyawan kontrak
+        total_lembur = self.jam_lembur * self.tarif_lembur  # hitung total uang lembur dulu
+        print("=== Karyawan Kontrak ===")   # judul jenis karyawan
+        print(f"Nama         : {self.nama}")                      # cetak nama
+        print(f"ID Karyawan  : {self.id_karyawan}")               # cetak ID
+        print(f"Gaji Pokok   : {rupiah(self.gaji_pokok)}")        # cetak gaji pokok
+        print(f"Jam Lembur   : {self.jam_lembur} jam")            # cetak jumlah jam lembur
+        print(f"Tarif Lembur : {rupiah(self.tarif_lembur)}/jam")  # cetak tarif lembur per jam
+        print(f"Total Lembur : {rupiah(total_lembur)}")           # cetak total uang lembur
+        print(f"Total Gaji   : {rupiah(self.hitung_gaji_total())}")  # cetak total gaji (pokok + lembur)
+
+
+# ======================================================
+# MAIN PROGRAM
+# ======================================================
+if __name__ == "__main__":                  # bagian ini hanya jalan kalau file dieksekusi langsung
+
+    # 1. Membuat objek dari class
+    tetap = KaryawanTetap("Budi Santoso", "KT-001", 5000000, 1500000)  # objek karyawan tetap (Budi)
+    kontrak = KaryawanKontrak("Siti Aminah", "KK-001", 3000000, 20, 50000)  # objek karyawan kontrak (Siti)
+
+    # 2. Menyimpan kedua objek ke dalam satu list
+    daftar_karyawan = [tetap, kontrak]      # satu list berisi dua jenis karyawan
+
+    # 3. Demonstrasi Polymorphism
+    print("########## DEMONSTRASI POLYMORPHISM ##########\n")
+    for karyawan in daftar_karyawan:        # ulangi untuk setiap objek di dalam list
+        karyawan.tampilkan_info()           # perintah sama, tapi hasilnya beda sesuai jenis objek
+        print("-" * 40)                     # garis pemisah antar karyawan
+
+    # 4. Demonstrasi Encapsulation
+    print("\n########## DEMONSTRASI ENCAPSULATION ##########\n")
+    print(f"Gaji pokok {tetap.nama} sebelum diubah: {rupiah(tetap.gaji_pokok)}")  # gaji sebelum diubah (lewat getter)
+
+    print("\n-> Mengubah gaji pokok dengan nilai tidak valid (-1000000):")
+    tetap.gaji_pokok = -1000000             # memanggil setter, nilai minus ditolak dan muncul peringatan
+
+    print("\n-> Mengubah gaji pokok dengan nilai valid (6000000):")
+    tetap.gaji_pokok = 6000000              # memanggil setter, nilai valid diterima dan gaji berubah
+
+    print("\nInformasi terbaru setelah perubahan:")
+    tetap.tampilkan_info()                  # tampilkan ulang, total gaji ikut berubah
